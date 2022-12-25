@@ -1,5 +1,5 @@
 # aleo_bitwise_stack.aleo
-A basic stack implementation utilizing a little-endian u32 buffer.
+A basic stack implementation utilizing little-endian u32 buffers.
 
 ## Build Guide
 
@@ -21,6 +21,9 @@ leo build
 
         Leo ✅ Built 'aleo_bitwise_stack.aleo' 
 
+
+The below output is from v0.0.1 which was immediately refactored to version v0.0.2 because it was
+not capable of storing greater than 4 8-bit integers.  v0.0.2 is capable of storing 128 8-bit integers.
 
 ```
 leo run main 4u32 8u32 
