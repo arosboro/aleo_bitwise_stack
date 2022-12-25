@@ -1,0 +1,10 @@
+{
+    "program": "aleo_bitwise_stack.aleo",
+    "version": "0.0.1",
+    "description": "A bitwise buffered stack implementation.",
+    "development": {
+        "private_key": "APrivateKey1zkpJHo2dccsM3e9ou7daoSx4VfzsNTJnN6xVCBUABM5AKLG",
+        "address": "aleo1g7lprd8dkrt76jnyrgnw4mw0cpe2u4ckkajs96wqu8xyggze6v8qlegxp3"
+    },
+    "license": "MIT"
+}

@@ -1,0 +1,5 @@
+Error [EPAR0370005]: expected : -- found '='
+    --> /Users/arosboro/git/aleo_bitwise_stack/src/main.leo:64:26
+     |
+  64 |         let empty_buffer = 0u32;
+     |                          ^
