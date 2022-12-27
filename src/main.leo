@@ -68,7 +68,7 @@ program aleo_bitwise_stack.aleo {
     function get_series_and_buffer_indexes(top: u32, member_size: u32) -> (u32, u32) {
         // The index of the 256 bit series which top points to.
         let series_index: u32 = top * member_size % 255u32 % member_size;
-        // The index of the 32 bit buffer in the 255 bit series which top points to.
+        // The index of the 32 bit buffer in the 256 bit series which top points to.
         let buffer_index: u32 = ((top * member_size) - (series_index * 256u32)) / 32u32;
         
         assert(series_index < 4u32);
