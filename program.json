@@ -1,6 +1,6 @@
 {
     "program": "aleo_bitwise_stack.aleo",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "A bitwise buffered stack implementation.",
     "development": {
         "private_key": "APrivateKey1zkpJHo2dccsM3e9ou7daoSx4VfzsNTJnN6xVCBUABM5AKLG",

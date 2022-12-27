@@ -22,8 +22,6 @@
 // 4u32 * 8u32 * 32u32 / 6u32 = 170u32 Cards which can be contained in a stack.  (170u32 * 6u32 = 1020u32 bits)
 // This allows for games with up to three decks of cards represented together in a single stack.
 
-
-// Start with a 
 program aleo_bitwise_stack.aleo {
 
     struct BufferSeries256Bit {
@@ -66,47 +64,85 @@ program aleo_bitwise_stack.aleo {
 
     // There are 4 256 bit series in a stack.  A series contains 8 buffers.  Each buffer is 32 bits.
     // Buffers are aligned to member_size.  Each stack element takes up member_size bits of the buffer.
+    // The index of the 32 bit buffer in the 256 bit series which top points to.
     function get_series_and_buffer_indexes(top: u32, member_size: u32) -> (u32, u32) {
-        // Top relative to how many 256 bit series have been used with member_size lengthy elements.
-        // It is the index of the next series to be used.
-        let series_index: u32 = top / (8u32 * 32u32 / member_size);
-        // Top relative to how many buffers have been used with member_size lengthy elements.
-        // It is the index of the next buffer to be used.
-        let buffer_index: u32 = (top % (8u32 * 32u32 / member_size)) / (32u32 / member_size);
-
+        // The index of the 256 bit series which top points to.
+        let series_index: u32 = top * member_size % 255u32 % member_size;
+        // The index of the 32 bit buffer in the 255 bit series which top points to.
+        let buffer_index: u32 = ((top * member_size) - (series_index * 256u32)) / 32u32;
+        
+        assert(series_index < 4u32);
+        assert(buffer_index < 8u32);
         return (series_index, buffer_index);
     }
 
-    function get_buffer_series(buffer_series_index: u32, stack: Stack) -> BufferSeries256Bit {
+    function get_buffer_series(series_index: u32, stack: Stack) -> BufferSeries256Bit {
         // Top relative to how many 256 bit series have been used with stack.member_size lengthy elements.  
         // It is the index of the next series to be used.
         let top: u32 = stack.top;
         let member_size: u32 = stack.member_size;
         let capacity: u32 = stack.capacity;
-        if buffer_series_index == 0u32 {
-            let buffer_series: BufferSeries256Bit = stack.s00;
-        } else if buffer_series_index == 1u32 {
-            let buffer_series: BufferSeries256Bit = stack.s01;
-        } else if buffer_series_index == 2u32 {
-            let buffer_series: BufferSeries256Bit = stack.s02;
-        } else if buffer_series_index == 3u32 {
-            let buffer_series: BufferSeries256Bit = stack.s03;
+        if series_index == 0u32 {
+            return BufferSeries256Bit {
+                b00: stack.s00.b00,
+                b01: stack.s00.b01,
+                b02: stack.s00.b02,
+                b03: stack.s00.b03,
+                b04: stack.s00.b04,
+                b05: stack.s00.b05,
+                b06: stack.s00.b06,
+                b07: stack.s00.b07,
+            };
+        } else if series_index == 1u32 {
+            return BufferSeries256Bit {
+                b00: stack.s01.b00,
+                b01: stack.s01.b01,
+                b02: stack.s01.b02,
+                b03: stack.s01.b03,
+                b04: stack.s01.b04,
+                b05: stack.s01.b05,
+                b06: stack.s01.b06,
+                b07: stack.s01.b07,
+            };
+        } else if series_index == 2u32 {
+            return BufferSeries256Bit {
+                b00: stack.s02.b00,
+                b01: stack.s02.b01,
+                b02: stack.s02.b02,
+                b03: stack.s02.b03,
+                b04: stack.s02.b04,
+                b05: stack.s02.b05,
+                b06: stack.s02.b06,
+                b07: stack.s02.b07,
+            };
+        } else if series_index == 3u32 {
+            return BufferSeries256Bit {
+                b00: stack.s03.b00,
+                b01: stack.s03.b01,
+                b02: stack.s03.b02,
+                b03: stack.s03.b03,
+                b04: stack.s03.b04,
+                b05: stack.s03.b05,
+                b06: stack.s03.b06,
+                b07: stack.s03.b07,
+            };
         } else {
             assert(top < (4u32 * 8u32 * 32u32 / member_size));
+            return BufferSeries256Bit {
+                b00: 0u32,
+                b01: 0u32,
+                b02: 0u32,
+                b03: 0u32,
+                b04: 0u32,
+                b05: 0u32,
+                b06: 0u32,
+                b07: 0u32,
+            };
         }
-        return BufferSeries256Bit {
-            b00: 0u32,
-            b01: 0u32,
-            b02: 0u32,
-            b03: 0u32,
-            b04: 0u32,
-            b05: 0u32,
-            b06: 0u32,
-            b07: 0u32,
-        };
+        
     }
 
-    function set_buffer_series(buffer_series_index: u32, stack: Stack, new_top: u32, buffer_series: BufferSeries256Bit) -> Stack {
+    function set_buffer_series(series_index: u32, stack: Stack, buffer_series: BufferSeries256Bit) -> (BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit) {
         // Top relative to how many 256 bit series have been used with stack.member_size lengthy elements.  
         // It is the index of the next series to be used.
         let top: u32 = stack.top;
@@ -152,28 +188,18 @@ program aleo_bitwise_stack.aleo {
             b06: stack.s03.b06,
             b07: stack.s03.b07,
         };
-        if buffer_series_index == 0u32 {
+        if series_index == 0u32 {
             buffer_series00 = buffer_series;
-        } else if buffer_series_index == 1u32 {
+        } else if series_index == 1u32 {
             buffer_series01 = buffer_series;
-        } else if buffer_series_index == 2u32 {
+        } else if series_index == 2u32 {
             buffer_series02 = buffer_series;
-        } else if buffer_series_index == 3u32 {
+        } else if series_index == 3u32 {
             buffer_series03 = buffer_series;
         } else {
             assert(top < (4u32 * 8u32 * 32u32 / member_size));
         }
-        return Stack {
-            owner: stack.owner,
-            gates: stack.gates,
-            capacity: capacity,
-            top: new_top,
-            member_size: member_size,
-            s00: buffer_series00,
-            s01: buffer_series01,
-            s02: buffer_series02,
-            s03: buffer_series03,
-        };
+        return (buffer_series00, buffer_series01, buffer_series02, buffer_series03);
     }
 
     function get_buffer_at_index(index: u32, buffer_series: BufferSeries256Bit) -> u32 {
@@ -224,9 +250,8 @@ program aleo_bitwise_stack.aleo {
             buffer06 = value;
         } else if index == 7u32 {
             buffer07 = value;
-        } else {
-            assert(index < 32u32);
         }
+
         return BufferSeries256Bit {
             b00: buffer00,
             b01: buffer01,
@@ -284,31 +309,45 @@ program aleo_bitwise_stack.aleo {
         let capacity: u32 = stack.capacity;
         let top: u32 = stack.top;
         let bits: u32 = stack.member_size;
-        let (buffer_series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
-        let buffer_series: BufferSeries256Bit = get_buffer_series(buffer_series_index, stack);
+        let (series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
+        // Check for overflow
+        if (top + 1u32) * bits % 32u32 < bits && (top + 1u32) * bits % 32u32 != 0u32 {
+            buffer_index += 1u32;
+        }
+        let buffer_series: BufferSeries256Bit = get_buffer_series(series_index, stack);
         let buffer: u32 = get_buffer_at_index(buffer_index, buffer_series);
         let max_u32_value: u32 = 4294967295u32; // b11111111111111111111111111111111
-        let max_bits_value: u32 = 0u32;
-        if bits == 32u32 {
-            max_bits_value = max_u32_value;
+        let mask: u32 = 0u32;
+        if bits >= 32u32 {
+            mask = max_u32_value;
+            bits = 32u32;
         }
         else {
-            max_bits_value = 2u32 ** bits - 1u32;
+            mask = max_u32_value >> (32u32 - bits);
         }
         // Check for overflow
         assert(top < capacity);
-        assert(value <= max_bits_value);
-        assert(max_bits_value <= max_u32_value / 2u32);
+        assert(value <= mask);
+        assert(mask <= max_u32_value);
         
         // Shift Left and then use OR to add the value
         let new_top: u32 = top + 1u32;
         // Where the magic happens:
-        let new_buffer: u32 = buffer << bits;
-        new_buffer = new_buffer | value;
+        let new_buffer: u32 = (buffer.shl_wrapped(bits)) | (value & mask);
         let new_buffer_series: BufferSeries256Bit = set_buffer_at_index(buffer_index, buffer_series, new_buffer);
-        let new_stack: Stack = set_buffer_series(buffer_series_index, stack, new_top, new_buffer_series);
+        let (s00, s01, s02, s03): (BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit) = set_buffer_series(series_index, stack, new_buffer_series);
 
-        return new_stack then finalize(stack.owner, 1u64);
+        return Stack {
+            owner: stack.owner,
+            gates: stack.gates,
+            capacity,
+            top: new_top,
+            member_size: bits,
+            s00,
+            s01,
+            s02,
+            s03,
+        } then finalize(stack.owner, 1u64);
     }
 
     finalize push(owner: address, count: u64) {
@@ -320,39 +359,39 @@ program aleo_bitwise_stack.aleo {
         assert(!is_empty(stack));
         let top: u32 = stack.top;
         let bits: u32 = stack.member_size;
-        let (buffer_series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
-        let buffer_series: BufferSeries256Bit = get_buffer_series(buffer_series_index, stack);
+        let (series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
+        let buffer_series: BufferSeries256Bit = get_buffer_series(series_index, stack);
         let buffer: u32 = get_buffer_at_index(buffer_index, buffer_series);
         let max_u32_value: u32 = 4294967295u32; // b11111111111111111111111111111111
-        let max_bits_value: u32 = 0u32;
-        if bits == 32u32 {
-            max_bits_value = max_u32_value;
+        let mask: u32 = 0u32;
+        if bits >= 32u32 {
+            mask = max_u32_value;
+            bits = 32u32;
         }
         else {
-            max_bits_value = 2u32 ** bits - 1u32;
+            mask = max_u32_value >> (32u32 - bits);
         }
-        let mask: u32 = max_bits_value;
-        if top % 32u32 == 0u32 {
-            let new_buffer_series_index: u32 = buffer_series_index - 1u32;
-            let new_buffer_series: BufferSeries256Bit = get_buffer_series(new_buffer_series_index, stack);
-            let new_buffer_index: u32 = 31u32;
-            let new_buffer: u32 = get_buffer_at_index(new_buffer_index, new_buffer_series);
-            let new_top: u32 = top - 1u32;
-            // Where the magic happens:
-            let value: u32 = new_buffer & mask;
-            new_buffer = new_buffer >> bits;
-            new_buffer_series = set_buffer_at_index(new_buffer_index, new_buffer_series, new_buffer);
-            let new_stack: Stack = set_buffer_series(new_buffer_series_index, stack, new_top, new_buffer_series);
-            return (value, new_stack) then finalize(stack.owner, 1u64);
-        } else {
-            let new_top: u32 = top - 1u32;
-            // Where the magic happens:
-            let value: u32 = buffer & mask;
-            let new_buffer: u32 = buffer >> bits;
-            let new_buffer_series: BufferSeries256Bit = set_buffer_at_index(buffer_index, buffer_series, new_buffer);
-            let new_stack: Stack = set_buffer_series(buffer_series_index, stack, new_top, new_buffer_series);
-            return (value, new_stack) then finalize(stack.owner, 1u64);
+        assert(top != 0u32);
+        let new_top: u32 = top - 1u32;
+        // Where the magic happens:
+        let value: u32 = buffer & mask;
+        let new_buffer: u32 = 0u32;
+        if bits < 32u32 {
+            new_buffer = buffer.shr_wrapped(bits) & (max_u32_value >> (32u32 % bits));
         }
+        let new_buffer_series: BufferSeries256Bit = set_buffer_at_index(buffer_index, buffer_series, new_buffer);
+        let (s00, s01, s02, s03): (BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit) = set_buffer_series(series_index, stack, new_buffer_series);
+        return (value, Stack {
+            owner: stack.owner,
+            gates: stack.gates,
+            capacity: stack.capacity,
+            top: new_top,
+            member_size: bits,
+            s00,
+            s01,
+            s02,
+            s03,
+        }) then finalize(stack.owner, 1u64);
     }
 
     finalize pop(owner: address, count: u64) {
@@ -364,16 +403,29 @@ program aleo_bitwise_stack.aleo {
         assert(!is_empty(stack));
         let top: u32 = stack.top;
         let bits: u32 = stack.member_size;
-        let (buffer_series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
-        let buffer_series: BufferSeries256Bit = get_buffer_series(buffer_series_index, stack);
+        let (series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
+        let buffer_series: BufferSeries256Bit = get_buffer_series(series_index, stack);
         let buffer: u32 = get_buffer_at_index(buffer_index, buffer_series);
-        if bits == 32u32 {
-            return (buffer, stack);
-        } else {
-            // use AND to get the value
-            let mask: u32 = 2u32 ** bits - 1u32;
-            return (buffer & mask, stack);
+        let max_u32_value: u32 = 4294967295u32; // b11111111111111111111111111111111
+        let mask: u32 = 0u32;
+        if bits >= 32u32 {
+            mask = max_u32_value;
+            bits = 32u32;
         }
+        else {
+            mask = max_u32_value >> (32u32 - bits);
+        }
+        return (buffer & mask, Stack {
+            owner: stack.owner,
+            gates: stack.gates,
+            capacity: stack.capacity,
+            top,
+            member_size: bits,
+            s00: stack.s00,
+            s01: stack.s01,
+            s02: stack.s02,
+            s03: stack.s03,
+        });
     }
 
     transition slice_to_recipient(recipient: address, stack: Stack) -> (Stack, Stack) {
@@ -381,9 +433,10 @@ program aleo_bitwise_stack.aleo {
         assert(!is_empty(stack));
         let top: u32 = stack.top;
         let bits: u32 = stack.member_size;
-        let (buffer_series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
-        let buffer_series: BufferSeries256Bit = get_buffer_series(buffer_series_index, stack);
+        let (series_index, buffer_index): (u32, u32) = get_series_and_buffer_indexes(top, bits);
+        let buffer_series: BufferSeries256Bit = get_buffer_series(series_index, stack);
         let buffer: u32 = get_buffer_at_index(buffer_index, buffer_series);
+        assert(top != 0u32);
         let new_top: u32 = top - 1u32;
         let empty_buffer_series: BufferSeries256Bit = BufferSeries256Bit {
             b00: 0u32,
@@ -396,77 +449,54 @@ program aleo_bitwise_stack.aleo {
             b07: 0u32,
         };
         let max_u32_value: u32 = 4294967295u32; // b11111111111111111111111111111111
-        let max_bits_value: u32 = 0u32;
-        if bits == 32u32 {
-            max_bits_value = max_u32_value;
+        let mask: u32 = 0u32;
+        if bits >= 32u32 {
+            mask = max_u32_value;
+            bits = 32u32;
         }
         else {
-            max_bits_value = 2u32 ** bits - 1u32;
+            mask = max_u32_value >> (32u32 - bits);
         }
-        let mask: u32 = max_bits_value;
-        if top % 32u32 == 0u32 {
-            // If the buffer is empty, we need to get the previous buffer
-            let new_buffer_series_index: u32 = buffer_series_index - 1u32;
-            let new_buffer_series: BufferSeries256Bit = get_buffer_series(new_buffer_series_index, stack);
-            let new_buffer_index: u32 = 31u32;
-            let new_buffer: u32 = get_buffer_at_index(new_buffer_index, new_buffer_series);
-            // Where the magic happens:
-            let value: u32 = new_buffer & mask;
-            new_buffer = new_buffer >> bits;
-            new_buffer_series = set_buffer_at_index(new_buffer_index, new_buffer_series, new_buffer);
-            let new_stack: Stack = set_buffer_series(new_buffer_series_index, stack, new_top, new_buffer_series);
-            let recipient_stack: Stack = Stack {
-                owner: recipient,
-                gates: 0u64,
-                capacity: 1u32,
-                top: 1u32,
-                member_size: bits,
-                s00: BufferSeries256Bit {
-                    b00: value, // Single element buffer same as u32 literal value
-                    b01: 0u32,
-                    b02: 0u32,
-                    b03: 0u32,
-                    b04: 0u32,
-                    b05: 0u32,
-                    b06: 0u32,
-                    b07: 0u32,
-                },
-                s01: empty_buffer_series,
-                s02: empty_buffer_series,
-                s03: empty_buffer_series,
-            };
-            return (new_stack, recipient_stack) then finalize(stack.owner, recipient, 1u64);
-        } else {
-            let new_buffer_index: u32 = buffer_index - 1u32;
-            let new_buffer: u32 = get_buffer_at_index(new_buffer_index, buffer_series);
-            // Where the magic happens:
-            let value: u32 = new_buffer & mask;
-            new_buffer = new_buffer >> bits;
-            let new_buffer_series: BufferSeries256Bit = set_buffer_at_index(new_buffer_index, buffer_series, new_buffer);
-            let new_stack: Stack = set_buffer_series(buffer_series_index, stack, new_top, new_buffer_series);
-            let recipient_stack: Stack = Stack {
-                owner: recipient,
-                gates: 0u64,
-                capacity: 1u32,
-                top: 1u32,
-                member_size: bits,
-                s00: BufferSeries256Bit {
-                    b00: value, // Single element buffer same as u32 literal value
-                    b01: 0u32,
-                    b02: 0u32,
-                    b03: 0u32,
-                    b04: 0u32,
-                    b05: 0u32,
-                    b06: 0u32,
-                    b07: 0u32,
-                },
-                s01: empty_buffer_series,
-                s02: empty_buffer_series,
-                s03: empty_buffer_series,
-            };
+        // Where the magic happens:
+        let value: u32 = buffer & mask;
+        let new_buffer: u32 = 0u32;
+        if bits < 32u32 {
+            new_buffer = buffer.shr_wrapped(bits) | mask;
+        }
+        let new_buffer_series: BufferSeries256Bit = set_buffer_at_index(buffer_index, buffer_series, new_buffer);
+        let (s00, s01, s02, s03): (BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit) = set_buffer_series(series_index, stack, new_buffer_series);
+        let recipient_stack: Stack = Stack {
+            owner: recipient,
+            gates: 0u64,
+            capacity: 1u32,
+            top: 1u32,
+            member_size: bits,
+            s00: BufferSeries256Bit {
+                b00: value, // Single element buffer same as u32 literal value
+                b01: 0u32,
+                b02: 0u32,
+                b03: 0u32,
+                b04: 0u32,
+                b05: 0u32,
+                b06: 0u32,
+                b07: 0u32,
+            },
+            s01: empty_buffer_series,
+            s02: empty_buffer_series,
+            s03: empty_buffer_series,
+        };
 
-            return (new_stack, recipient_stack) then finalize(stack.owner, recipient, 1u64);
-        }
+        return (Stack {
+            owner: stack.owner,
+            gates: 0u64,
+            capacity: 1u32,
+            top: new_top,
+            member_size: bits,
+            s00,
+            s01,
+            s02,
+            s03,
+        }, recipient_stack) then finalize(stack.owner, recipient, 1u64);
     }
 
     finalize slice_to_recipient(owner: address, recipient: address, count: u64) {
