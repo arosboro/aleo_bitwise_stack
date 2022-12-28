@@ -467,8 +467,8 @@ program aleo_bitwise_stack.aleo {
         let (s00, s01, s02, s03): (BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit, BufferSeries256Bit) = set_buffer_series(series_index, stack, new_buffer_series);
         let recipient_stack: Stack = Stack {
             owner: recipient,
-            gates: 0u64,
-            capacity: 1u32,
+            gates: stack.gates,
+            capacity: stack.capacity,
             top: 1u32,
             member_size: bits,
             s00: BufferSeries256Bit {
@@ -488,8 +488,8 @@ program aleo_bitwise_stack.aleo {
 
         return (Stack {
             owner: stack.owner,
-            gates: 0u64,
-            capacity: 1u32,
+            gates: stack.gates,
+            capacity: stack.capacity,
             top: new_top,
             member_size: bits,
             s00,
